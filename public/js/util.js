@@ -29,4 +29,6 @@ export const createTransceiverParts = (transceiverReceiveWrap, transceiverSendWr
     }
 };
 
+export const delay = (ms, data = null) => new Promise((resolve) => setTimeout(() => resolve(data), ms));
+
 export default _;

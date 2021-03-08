@@ -2,41 +2,40 @@ class MyPromise {
     constructor(cbFunc) {
         // pending(대기) fulfilled(성공), rejected(실패), settled(결론은 남)
         this.status = 'pending';
+        
         this.cbList = [];
+        this.error = () => {throw new Error('MyPromise Error')};
 
-        cbFunc(this.resolve, this.reject);
-    }
+        setTimeout(() => {
+            try {
+                this.status = 'fulfilled';
+                cbFunc(this.pipe(...this.cbList), this.error);
+            } catch (error) {
+                this.status = 'rejected';
+                this.error(error);
+            }
+        }, 0);
+    }    
     then(func) {
         this.cbList.push(func);
+        this.status = 'fulfilled';
         return this;
     }
-    catch(error) {}
-    /*
-    resolve(result) {
-        this.status = 'fulfilled';
-    }
-    reject(error) {
+    
+    catch(error) {
+        this.error = error;
         this.status = 'rejected';
+        return this;
     }
-    */
+
+    pipe = (...fns) => (initValue) => fns.reduce((acc, fn) => fn(acc), initValue);
 }
 
 //MyPromise 를 사용하기
-const p = new MyPromise((resolve, reject) => {    
+const p = new MyPromise((resolve, reject) => {
     setTimeout(() => resolve('completed'), 1000);
 });
 
-/* 
-    1. 일단 Promise를 생성할 때 매개변수로 들어간 콜백함수가 바로 실행되는 듯.
-        (상태는 pending)
-    2. then이 호출되면 1. 의 콜백함수 안의 resolve에 들어간 인자 값이 then의 콜백으로 오는 거 같음
-    3. catch도 마찬가지일까? reject..
-*/
+p.then((res) => console.log(res, 1)).catch(() => console.log('에러'));
 
-
-
-
-
-console.log(p)
-
-p.then((res) => console.log(res));
+// 어찌저찌 해결하였지만 이해가 명확히 안됨. 계속 공부 필요

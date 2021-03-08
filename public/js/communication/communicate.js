@@ -1,4 +1,4 @@
-import _ from '../util.js';
+import _, { delay } from '../util.js';
 import { hexToDec } from '../convert.js';
 import { blinkingPie } from '../canvasController.js';
 
@@ -17,16 +17,11 @@ const changeArrowLocation = (hexValue, arrowImage) => {
 // 화살표 위치 변경 전, 송수신기(canvas) 전체 애니메이션 적용 (깜박이는 애니메이션)
 const receivedData = (canvas, timeout) => {
     _.classAdd(canvas, 'blinking');
-    return new Promise((resolve, reject) =>
-        setTimeout(() => {
-            _.classRemove(canvas, 'blinking');
-            resolve('receivedData OK');
-        }, timeout),
-    );
+    return delay(timeout, canvas).then(() => _.classRemove(canvas, 'blinking'));
 };
 
-// 화살표 위치 변경, 캔버스 색상 변경
-const changeArrowAndPieColor = (infoFromPlanet, timeout) =>
+// 화살표 위치 변경, 캔버스 색상 변경   // delay 미적용.. 너무 돌고 도는중 / 미션 5하면서 프로미스 다시공부
+const changeArrow = (infoFromPlanet, timeout) =>
     new Promise((resolve, reject) => {
         const { anotherCanvasInfo, anotherInput, resultData } = infoFromPlanet;
         let { charPos } = infoFromPlanet;
@@ -37,11 +32,11 @@ const changeArrowAndPieColor = (infoFromPlanet, timeout) =>
                 try {
                     if (resultData === anotherInput.value) {
                         arrowImage.className = '';
-                        resolve('changeArrowAndPieColor OK');                        
+                        resolve('changeArrow OK');                        
                     } else {
                         let currChar = resultData[charPos];
                         if (!currChar)
-                            throw new Error('Error - changeArrowAndPieColor');
+                            throw new Error('Error - changeArrow');
                         anotherInput.value += currChar;
                         charPos++;
 
@@ -66,15 +61,15 @@ const changeArrowAndPieColor = (infoFromPlanet, timeout) =>
 const sendMessageAnotherPlanet = (infoFromPlanet, timeout) => {
     const {
         anotherCanvasInfo: { canvas },
+        anotherTranslateBtn,
     } = infoFromPlanet;
 
-    return new Promise((resolve, reject) => {
-        receivedData(canvas, timeout).then(() =>
-            changeArrowAndPieColor(infoFromPlanet, timeout).then(() =>
-                resolve('OK'),
-            ),
-        ).catch((err)=> console.error(err));
-    });
+    receivedData(canvas, timeout)
+        .then(() => 
+        changeArrow(infoFromPlanet, timeout)
+            .then(() => (anotherTranslateBtn.disabled = false)))
+        .catch((err) => console.error(err));
 };
 
 export { sendMessageAnotherPlanet };
+
